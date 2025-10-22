@@ -1,17 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
-// 注意：这里的组件名要和你实际修改后的文件名一致（比如之前改成的LoginView等）
-import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
+import AdminView from '../views/AdminView.vue'
+import TeacherView from '../views/TeacherView.vue'
+import StudentView from '../views/StudentView.vue'
 
-// 定义路由规则
 const routes = [
-  {
-    path: '/',
-    name: 'Home',
-    component: HomeView,
-    meta: { requiresAuth: true }
-  },
   {
     path: '/login',
     name: 'Login',
@@ -23,24 +17,86 @@ const routes = [
     name: 'Register',
     component: RegisterView,
     meta: { requiresAuth: false }
+  },
+  // 管理员路由（仅role=0可访问）
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: AdminView,
+    meta: { 
+      requiresAuth: true,
+      roles: [0] // 允许访问的角色（0=管理员）
+    }
+  },
+  // 教师路由（仅role=1可访问）
+  {
+    path: '/teacher',
+    name: 'Teacher',
+    component: TeacherView,
+    meta: { 
+      requiresAuth: true,
+      roles: [1] // 允许访问的角色（1=教师）
+    }
+  },
+  // 学生路由（仅role=2可访问）
+  {
+    path: '/student',
+    name: 'Student',
+    component: StudentView,
+    meta: { 
+      requiresAuth: true,
+      roles: [2] // 允许访问的角色（2=学生）
+    }
+  },
+  // 重定向：未匹配路径跳转到登录页
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/login'
   }
 ]
 
-// 创建路由实例（关键：使用createRouter和createWebHistory）
 const router = createRouter({
-  history: createWebHistory(), // 使用createWebHistory
-  routes // 使用routes变量
+  history: createWebHistory(),
+  routes
 })
 
-// 路由守卫
+// 路由守卫：验证登录状态和角色权限
 router.beforeEach((to, from, next) => {
-  const isLogin = localStorage.getItem('userInfo')
-  if (to.meta.requiresAuth && !isLogin) {
+  const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null')
+  
+  // 1. 未登录用户只能访问登录/注册页
+  if (to.meta.requiresAuth && !userInfo) {
     next('/login')
-  } else {
-    next()
+    return
   }
+  
+  // 2. 已登录用户验证角色权限
+  if (to.meta.requiresAuth && userInfo) {
+    const userRole = userInfo.role
+    // 检查当前角色是否在路由允许的角色列表中
+    if (to.meta.roles.includes(userRole)) {
+      next()
+    } else {
+      // 角色不匹配：跳转到对应角色的首页（或提示无权限）
+      switch(userRole) {
+        case 0:
+          next('/admin')
+          break
+        case 1:
+          next('/teacher')
+          break
+        case 2:
+          next('/student')
+          break
+        default:
+          next('/login')
+      }
+    }
+    return
+  }
+  
+  // 3. 无需登录的页面直接放行
+  next()
 })
 
-// 导出路由实例（关键：确保导出后被main.js使用）
 export default router

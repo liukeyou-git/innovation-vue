@@ -49,9 +49,24 @@ const handleLogin = async () => {
   try {
     const res = await userLogin(form.value)
     if (res.code === 0) {
-      // 登录成功，保存用户信息
+      // 保存用户信息到Pinia
       userStore.setUserInfo(res.data)
-      router.push('/')
+      
+      // 根据角色跳转到对应页面
+      const role = res.data.role
+      switch(role) {
+        case 0:
+          router.push('/admin') // 管理员
+          break
+        case 1:
+          router.push('/teacher') // 教师
+          break
+        case 2:
+          router.push('/student') // 学生
+          break
+        default:
+          errorMsg.value = '未知角色，登录失败'
+      }
     } else {
       errorMsg.value = res.message
     }
@@ -61,6 +76,7 @@ const handleLogin = async () => {
   }
 }
 </script>
+
 
 <style scoped>
 .login-container {

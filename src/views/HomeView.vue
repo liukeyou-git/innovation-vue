@@ -17,6 +17,7 @@
 <script setup>
 import { useUserStore } from '../store'
 import { useRouter } from 'vue-router'
+import { userLogout } from '../api/user' 
 
 const userStore = useUserStore()
 const router = useRouter()
@@ -32,9 +33,15 @@ const getRoleName = () => {
 }
 
 // 退出登录
-const handleLogout = () => {
-  userStore.logout()
-  router.push('/login')
+const handleLogout = async () => {
+  try {
+    await userLogout()
+  } catch (err) {
+    console.error('退出登录失败', err)
+  } finally {
+    userStore.logout()
+    router.push('/login')
+  }
 }
 </script>
 

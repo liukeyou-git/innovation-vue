@@ -3,7 +3,7 @@
     <header>
       <h1>管理员控制台</h1>
       <div class="user-info">
-        <span>欢迎您，{{ userStore.userInfo.realName }}（管理员）</span>
+        <span>欢迎您，{{ userStore.userInfo?.realName }}（管理员）</span>
         <button @click="handleLogout">退出登录</button>
       </div>
     </header>
@@ -21,14 +21,22 @@
 <script setup>
 import { useUserStore } from '../store'
 import { useRouter } from 'vue-router'
+import { userLogout } from '../api/user'
 
 const userStore = useUserStore()
 const router = useRouter()
 
-// 退出登录
-const handleLogout = () => {
-  userStore.logout()
-  router.push('/login')
+const handleLogout = async () => {
+  try {
+    // 调用后端退出接口
+    await userLogout()
+  } catch (err) {
+    console.error('退出登录接口调用失败', err)
+  } finally {
+    // 无论后端是否成功，都清除本地用户信息并跳转登录页
+    userStore.logout()
+    router.push('/login')
+  }
 }
 </script>
 

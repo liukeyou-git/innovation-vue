@@ -3,7 +3,7 @@
     <header>
       <h1>学生中心</h1>
       <div class="user-info">
-        <span>欢迎您，{{ userStore.userInfo.realName }}（学生）</span>
+        <span>欢迎您，{{ userStore.userInfo?.realName }}（学生）</span>
         <button @click="handleLogout">退出登录</button>
       </div>
     </header>
@@ -21,14 +21,21 @@
 <script setup>
 import { useUserStore } from '../store'
 import { useRouter } from 'vue-router'
+import { userLogout } from '../api/user'
 
 const userStore = useUserStore()
 const router = useRouter()
 
 // 退出登录
-const handleLogout = () => {
-  userStore.logout()
-  router.push('/login')
+const handleLogout = async () => {
+  try {
+    await userLogout()
+  } catch (err) {
+    console.error('退出登录失败', err)
+  } finally {
+    userStore.logout()
+    router.push('/login')
+  }
 }
 </script>
 

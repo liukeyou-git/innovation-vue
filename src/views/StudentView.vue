@@ -11,8 +11,11 @@
       <h2>学生功能模块</h2>
       <ul>
         <li>我的成绩查询</li>
-        <li>创新创业项目申报</li>
-        <li>个人信息管理</li>
+        <li><router-link to="/student/project-apply" class="project-link">
+            创新创业项目申报
+          </router-link>
+        </li>
+        <li>个人中心</li>
       </ul>
     </main>
   </div>
@@ -40,6 +43,18 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
+.project-link {
+  color: #3498db;
+  text-decoration: none;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.project-link:hover {
+  text-decoration: underline;
+}
+
 .role-container {
   min-height: 100vh;
   display: flex;

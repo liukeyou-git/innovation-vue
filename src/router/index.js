@@ -48,6 +48,15 @@ const routes = [
       roles: [2] // 允许访问的角色（2=学生）
     }
   },
+  {
+  path: '/student/project-apply',
+  name: 'StudentProjectApply',
+  component: () => import('../views/StudentProjectApplyView.vue'),
+  meta: { 
+    requiresAuth: true,
+    roles: [2] // 仅学生可访问
+  }
+  },
   // 重定向：未匹配路径跳转到登录页
   {
     path: '/:pathMatch(.*)*',

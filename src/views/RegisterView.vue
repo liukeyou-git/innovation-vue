@@ -4,7 +4,7 @@
       <h2>用户注册</h2>
       <form @submit.prevent="handleRegister">
         <div class="form-item">
-          <label>用户名</label>
+          <label>用户名 <span class="required">*</span></label>
           <input 
             type="text" 
             v-model="form.username" 
@@ -13,7 +13,7 @@
           >
         </div>
         <div class="form-item">
-          <label>密码</label>
+          <label>密码 <span class="required">*</span></label>
           <input 
             type="password" 
             v-model="form.password" 
@@ -22,7 +22,7 @@
           >
         </div>
         <div class="form-item">
-          <label>真实姓名</label>
+          <label>真实姓名 <span class="required">*</span></label>
           <input 
             type="text" 
             v-model="form.realName" 
@@ -31,7 +31,7 @@
           >
         </div>
         <div class="form-item">
-          <label>角色</label>
+          <label>角色 <span class="required">*</span></label>
           <select v-model="form.role" @change="handleRoleChange" required>
             <option value="">请选择角色</option>
             <option value="0">管理员</option>
@@ -41,38 +41,35 @@
         </div>
 
         <!-- 学生特有字段 -->
-        <div v-if="form.role === 2" class="form-item">
-          <label>学号</label>
+        <div v-if="form.role === '2'" class="form-item">
+          <label>学号 <span class="required">*</span></label>
           <input 
             type="text" 
             v-model="form.studentId" 
             placeholder="请输入学号"
+            required
           >
         </div>
-        <div v-if="form.role === 2" class="form-item">
-          <label>班级</label>
+
+        <!-- 学生特有字段 -->
+        <div v-if="form.role === '2'" class="form-item">
+          <label>班级 <span class="required">*</span></label>
           <input 
             type="text" 
             v-model="form.className" 
             placeholder="请输入班级"
+            required
           >
         </div>
 
         <!-- 教师特有字段 -->
-        <div v-if="form.role === 1" class="form-item">
-          <label>工号</label>
+        <div v-if="form.role === '1'" class="form-item">
+          <label>工号 <span class="required">*</span></label>
           <input 
             type="text" 
             v-model="form.teacherId" 
             placeholder="请输入工号"
-          >
-        </div>
-        <div v-if="form.role === 1" class="form-item">
-          <label>院系</label>
-          <input 
-            type="text" 
-            v-model="form.department" 
-            placeholder="请输入院系"
+            required
           >
         </div>
 
@@ -115,10 +112,9 @@ const form = ref({
   password: '',
   role: '',
   realName: '',
-  studentId: '',
-  className: '',
-  teacherId: '',
-  department: '',
+  studentId: '',  // 学生学号
+  teacherId: '',  // 教师工号
+  className: '',  // 学生班级
   email: '',
   phone: ''
 })
@@ -128,13 +124,13 @@ const router = useRouter()
 
 const handleRoleChange = () => {
   // 切换角色时清空其他角色的字段
-  if (form.value.role !== 2) {
+  if (form.value.role !== '2') {
     form.value.studentId = ''
     form.value.className = ''
   }
-  if (form.value.role !== 1) {
+  
+  if (form.value.role !== '1') {
     form.value.teacherId = ''
-    form.value.department = ''
   }
 }
 
@@ -143,6 +139,19 @@ const handleRegister = async () => {
     // 基础验证
     if (!form.value.username || !form.value.password || !form.value.role || !form.value.realName) {
       message.value = '带*的字段为必填项'
+      isSuccess.value = false
+      return
+    }
+
+    // 角色特有字段验证
+    if (form.value.role === '2' && !form.value.studentId) {
+      message.value = '请输入学号'
+      isSuccess.value = false
+      return
+    }
+    
+    if (form.value.role === '1' && !form.value.teacherId) {
+      message.value = '请输入工号'
       isSuccess.value = false
       return
     }
@@ -168,6 +177,10 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
+.required {
+  color: #ff4d4f;
+}
+
 .register-container {
   display: flex;
   justify-content: center;

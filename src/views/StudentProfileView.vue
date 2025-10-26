@@ -10,6 +10,9 @@
     <main>
       <div class="profile-card">
         <h2>个人信息</h2>
+        <div class="project-actions">
+          <button type="button" class="back-btn" @click="router.back()">返回</button>
+        </div>
         <div class="info-item">
           <span class="label">用户名：</span>
           <span class="value">{{ userStore.userInfo?.username }}</span>
@@ -61,7 +64,7 @@
               <p><span class="info-label">项目描述：</span>{{ project.description || '无' }}</p>
             </div>
             <div class="project-actions">
-              <router-link :to="`/student/project-detail/${project.id}`" class="detail-btn">
+              <router-link :to="`/student/project-detail/${project.projectId}`" class="detail-btn">
                 查看详情
               </router-link>
             </div>
@@ -163,6 +166,19 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
+.back-btn {
+  padding: 0.6rem 1.2rem;
+  background-color: #999;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.back-btn:hover {
+  background-color: #777;
+}
+
 .profile-container {
   min-height: 100vh;
   display: flex;

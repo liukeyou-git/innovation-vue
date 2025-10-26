@@ -76,6 +76,25 @@ const routes = [
     roles: [2] // 仅学生可访问
   }
   },
+  // 教师项目管理路由
+  {
+  path: '/teacher/projects',
+  name: 'TeacherProjectManagement',
+  component: () => import('../views/TeacherProjectManagementView.vue'),
+  meta: { 
+    requiresAuth: true,
+    roles: [1] // 仅教师可访问
+  }
+  },
+  {
+  path: '/teacher/projects-detail/:id',
+  name: 'TeacherProjectDetail',
+  component: () => import('../views/TeacherProjectDetailView.vue'),
+  meta: { 
+    requiresAuth: true,
+    roles: [1] // 仅教师可访问
+  }
+  },
   // 重定向：未匹配路径跳转到登录页
   {
     path: '/:pathMatch(.*)*',

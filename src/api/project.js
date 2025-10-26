@@ -24,3 +24,18 @@ export const getStudentProjects = () => {
 export const getProjectDetail = (projectId) => {
   return request.get(`/projects/${projectId}`)
 }
+
+// 教师获取待审核项目列表
+export const getTeacherPendingProjects = () => {
+  return request.get('/teacher/projects/pending')
+}
+
+// 教师获取已审核项目列表
+export const getTeacherApprovedProjects = () => {
+  return request.get('/teacher/projects/approved')
+}
+
+// 教师审核项目
+export const reviewProject = (projectId, data) => {
+  return request.put(`/teacher/projects/${projectId}/review`, data)
+}

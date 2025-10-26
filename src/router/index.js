@@ -57,6 +57,25 @@ const routes = [
     roles: [2] // 仅学生可访问
   }
   },
+  // 在学生路由配置后添加
+  {
+  path: '/student/profile',
+  name: 'StudentProfile',
+  component: () => import('../views/StudentProfileView.vue'),
+  meta: { 
+    requiresAuth: true,
+    roles: [2] // 仅学生可访问
+  }
+  },
+  {
+  path: '/student/project-detail/:id',
+  name: 'StudentProjectDetail',
+  component: () => import('../views/StudentProjectDetailView.vue'),
+  meta: { 
+    requiresAuth: true,
+    roles: [2] // 仅学生可访问
+  }
+  },
   // 重定向：未匹配路径跳转到登录页
   {
     path: '/:pathMatch(.*)*',

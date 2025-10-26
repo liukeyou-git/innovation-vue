@@ -15,3 +15,8 @@ export const userRegister = (data) => {
 export const userLogout = () => {
   return request.post('/user/logout') // 调用后端退出接口
 }
+
+// 获取当前登录用户的个人信息
+export const getCurrentUserProfile = () => {
+  return request.get('/user/profile')
+}

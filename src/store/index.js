@@ -1,14 +1,16 @@
+// src/store/index.js（或user.js）
 import { defineStore } from 'pinia'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    userInfo: JSON.parse(localStorage.getItem('userInfo') || 'null')
+    userInfo: null  // 存储用户信息
   }),
   actions: {
-    // 保存用户信息
-    setUserInfo(user) {
-      this.userInfo = user
-      localStorage.setItem('userInfo', JSON.stringify(user))
+    // 设置用户信息
+    setUserInfo(info) {
+      this.userInfo = info
+      // 同步到localStorage，避免刷新丢失
+      localStorage.setItem('userInfo', JSON.stringify(info))
     },
     // 退出登录
     logout() {

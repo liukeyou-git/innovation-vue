@@ -49,20 +49,26 @@ const handleLogin = async () => {
   try {
     const res = await userLogin(form.value)
     if (res.code === 0) {
-      // 保存用户信息到Pinia
-      userStore.setUserInfo(res.data)
+      // 1. 关键：将Token存入localStorage，供request.js使用
+      localStorage.setItem('token', res.data.token);
       
-      // 根据角色跳转到对应页面
+      // 2. 保存用户信息到Pinia（角色、姓名等）
+      userStore.setUserInfo({
+        ...res.data, // 包含role等信息
+        // 如需其他用户信息，可补充
+      });
+      
+      // 3. 根据角色跳转到对应页面
       const role = res.data.role
       switch(role) {
         case 0:
-          router.push('/admin') // 管理员
+          router.push('/admin') 
           break
         case 1:
-          router.push('/teacher') // 教师
+          router.push('/teacher') 
           break
         case 2:
-          router.push('/student') // 学生
+          router.push('/student') 
           break
         default:
           errorMsg.value = '未知角色，登录失败'

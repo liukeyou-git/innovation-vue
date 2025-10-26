@@ -15,7 +15,10 @@
             创新创业项目申报
           </router-link>
         </li>
-        <li>个人中心</li>
+        <li><router-link to="/student/profile" class="project-link">
+            个人中心
+          </router-link>
+        </li>
       </ul>
     </main>
   </div>

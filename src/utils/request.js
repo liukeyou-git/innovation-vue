@@ -5,17 +5,20 @@ const request = axios.create({
   timeout: 5000
 })
 
-// 请求拦截器
+// 请求拦截器：添加Token到请求头
 request.interceptors.request.use(
-  (config) => {
-    // 添加token（如果有）
-    const userInfo = localStorage.getItem('userInfo')
-    if (userInfo) {
-      config.headers.Authorization = `Bearer ${JSON.parse(userInfo).token}`
+  config => {
+    // 从localStorage获取Token（登录时存储）
+    const token = localStorage.getItem('token')
+    if (token) {
+      // 按后端要求的格式添加（通常是Bearer + Token）
+      config.headers.Authorization = `Bearer ${token}`
     }
     return config
   },
-  (error) => Promise.reject(error)
+  error => {
+    return Promise.reject(error)
+  }
 )
 
 // 响应拦截器

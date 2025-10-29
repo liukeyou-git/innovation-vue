@@ -23,6 +23,15 @@
         >
           已审核项目
         </button>
+
+        <!-- 新增：已结题项目标签 -->
+        <button 
+          class="tab-btn" 
+          :class="{ active: activeTab === 'completed' }" 
+          @click="activeTab = 'completed'"
+        >
+          已结题项目
+        </button>
       </div>
       
       <div v-if="loading" class="loading">加载中...</div>
@@ -45,6 +54,10 @@
             <p><span class="info-label">申报学生：</span>{{ project.studentName }}</p>
             <p><span class="info-label">学号：</span>{{ project.studentId }}</p>
             <p><span class="info-label">提交时间：</span>{{ formatDate(project.submitTime) }}</p>
+            <!-- 新增：已结题项目显示结题时间 -->
+            <p v-if="project.status === 3 && project.completeTime" class="info-item">
+              <span class="info-label">结题时间：</span>{{ formatDate(project.completeTime) }}
+            </p>
             <p><span class="info-label">项目简述：</span>{{ truncate(project.description || '无', 50) }}</p>
           </div>
           <div class="project-actions">
@@ -55,6 +68,9 @@
             <div v-if="activeTab === 'pending'" class="review-buttons">
               <button class="approve-btn" @click="handleReview(project.id, 1)">通过</button>
               <button class="reject-btn" @click="handleReview(project.id, 2)">驳回</button>
+            </div>
+            <div v-if="activeTab === 'approved' && project.status === 1" class="complete-action">
+              <button class="complete-btn" @click="handleComplete(project.id)">结题</button>
             </div>
           </div>
         </div>
@@ -71,7 +87,7 @@ import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store'
 import { userLogout } from '../api/user'
-import { getTeacherPendingProjects, getTeacherApprovedProjects, reviewProject } from '../api/project'
+import { getTeacherPendingProjects, getTeacherApprovedProjects, getTeacherCompletedProjects, reviewProject,completeProject } from '../api/project'
 
 const userStore = useUserStore()
 const router = useRouter()
@@ -89,8 +105,10 @@ const loadProjects = async () => {
     let res
     if (activeTab.value === 'pending') {
       res = await getTeacherPendingProjects()
-    } else {
+    } else if (activeTab.value === 'approved') {
       res = await getTeacherApprovedProjects()
+    } else {
+      res = await getTeacherCompletedProjects() // 新增：已结题
     }
     
     if (res.code === 0) {
@@ -146,7 +164,8 @@ const getStatusText = (status) => {
   const statusMap = {
     0: '待审核',
     1: '已通过',
-    2: '已驳回'
+    2: '已驳回',
+    3: '已结题'  // 新增状态
   }
   return statusMap[status] || '未知状态'
 }
@@ -156,7 +175,8 @@ const getStatusClass = (status) => {
   const classMap = {
     0: 'pending',
     1: 'approved',
-    2: 'rejected'
+    2: 'rejected',
+    3: 'completed'  // 新增状态
   }
   return classMap[status] || ''
 }
@@ -172,6 +192,31 @@ const handleLogout = async () => {
     router.push('/login')
   }
 }
+
+// 结题处理函数
+const handleComplete = async (projectId) => {
+  if (!confirm('确定要将该项目标记为已结题吗？')) {
+    return
+  }
+  
+  try {
+    const res = await completeProject(projectId, { 
+      status: 3,
+      completeTime: new Date().toISOString()
+    })
+    
+    if (res.code === 0) {
+      // 重新加载列表
+      loadProjects()
+    } else {
+      alert(res.message || '结题操作失败')
+    }
+  } catch (err) {
+    console.error('项目结题失败', err)
+    alert('结题操作失败，请稍后重试')
+  }
+}
+
 // 在现有的 script 部分添加以下方法
 const truncate = (str, length) => {
   if (str.length <= length) {
@@ -182,6 +227,19 @@ const truncate = (str, length) => {
 </script>
 
 <style scoped>
+.complete-btn {
+  padding: 0.5rem 1rem;
+  background-color: #165DFF;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.status.completed {
+  background-color: #165DFF;
+}
+
 .back-btn {
   padding: 0.6rem 1.2rem;
   background-color: #999;

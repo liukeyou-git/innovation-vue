@@ -39,3 +39,13 @@ export const getTeacherApprovedProjects = () => {
 export const reviewProject = (projectId, data) => {
   return request.put(`/teacher/projects/${projectId}/review`, data)
 }
+
+// 教师对项目进行结题操作
+export const completeProject = (projectId, data) => {
+  return request.put(`/teacher/projects/${projectId}/complete`, data)
+}
+
+// 获取已结题项目列表
+export const getTeacherCompletedProjects = () => {
+  return request.get('/teacher/projects/completed')
+}

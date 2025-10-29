@@ -96,6 +96,14 @@
             <button class="reject-btn" @click="handleReview(2)">驳回</button>
           </div>
         </div>
+
+        <!-- 结题操作 -->
+        <div v-if="project.project?.status === 1" class="complete-section">
+          <h3>结题操作</h3>
+          <div class="complete-actions">
+            <button class="complete-btn" @click="handleComplete()">标记为已结题</button>
+          </div>
+        </div>
         
         <div class="project-actions">
           <button type="button" class="back-btn" @click="router.back()">返回列表</button>
@@ -110,7 +118,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '../store'
 import { userLogout } from '../api/user'
-import { getProjectDetail, reviewProject } from '../api/project'
+import { getProjectDetail, reviewProject, completeProject } from '../api/project'
 
 const userStore = useUserStore()
 const router = useRouter()
@@ -164,6 +172,30 @@ const handleReview = async (status) => {
   }
 }
 
+// 新增结题处理函数
+const handleComplete = async () => {
+  if (!confirm('确定要将该项目标记为已结题吗？')) {
+    return
+  }
+  
+  try {
+    const res = await completeProject(project.value.id, { 
+      status: 3,
+      completeTime: new Date().toISOString()
+    })
+    
+    if (res.code === 0) {
+      project.value.project.status = 3
+      project.value.completeTime = new Date().toISOString()
+    } else {
+      alert(res.message || '结题操作失败')
+    }
+  } catch (err) {
+    console.error('项目结题失败', err)
+    alert('结题操作失败，请稍后重试')
+  }
+}
+
 // 格式化日期
 const formatDate = (dateString) => {
   if (!dateString) return '未设置'
@@ -176,7 +208,8 @@ const getStatusText = (status) => {
   const statusMap = {
     0: '待审核',
     1: '已通过',
-    2: '已驳回'
+    2: '已驳回',
+    3: '已结题'  // 新增状态
   }
   return statusMap[status] || '未知状态'
 }
@@ -186,7 +219,8 @@ const getStatusClass = (status) => {
   const classMap = {
     0: 'pending',
     1: 'approved',
-    2: 'rejected'
+    2: 'rejected',
+    3: 'completed'  // 新增状态
   }
   return classMap[status] || ''
 }
@@ -205,6 +239,34 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
+.complete-section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.complete-actions {
+  margin-top: 1rem;
+}
+
+.complete-btn {
+  padding: 0.6rem 1.2rem;
+  background-color: #165DFF;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.complete-btn:hover {
+  background-color: #0E42D2;
+}
+
+.status.completed {
+  background-color: #165DFF;
+}
+
 .project-detail-container {
   min-height: 100vh;
   display: flex;

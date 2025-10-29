@@ -137,7 +137,8 @@ const getStatusText = (status) => {
   const statusMap = {
     0: '待审核',
     1: '已通过',
-    2: '已驳回'
+    2: '已驳回',
+    3: '已结题'
   }
   return statusMap[status] || '未知状态'
 }
@@ -147,7 +148,8 @@ const getStatusClass = (status) => {
   const classMap = {
     0: 'pending',
     1: 'approved',
-    2: 'rejected'
+    2: 'rejected',
+    3: 'completed'
   }
   return classMap[status] || ''
 }
@@ -166,6 +168,10 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
+.status.completed {
+  background-color: #165DFF; /* 已结题状态用蓝色 */
+}
+
 .back-btn {
   padding: 0.6rem 1.2rem;
   background-color: #999;

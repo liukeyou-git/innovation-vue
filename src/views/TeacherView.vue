@@ -10,8 +10,10 @@
     <main>
       <h2>教师功能模块</h2>
       <ul>
-        <li>学生成绩录入</li>
-        <li>成绩查询</li>
+        <li><router-link to="/teacher/score-management" class="score-link">
+            学生成绩管理
+          </router-link>
+        </li>
         <li><router-link to="/teacher/projects" class="project-link">
             创新创业项目管理
           </router-link>
@@ -43,6 +45,18 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
+.score-link {
+  color: #3498db;
+  text-decoration: none;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.score-link:hover {
+  text-decoration: underline;
+}
+
 .project-link {
   color: #3498db;
   text-decoration: none;

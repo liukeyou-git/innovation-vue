@@ -104,6 +104,19 @@
             <button class="complete-btn" @click="handleComplete()">标记为已结题</button>
           </div>
         </div>
+
+        <div v-if="project.project?.status === 3" class="score-section">
+          <h3>成绩评定</h3>
+          <div class="score-actions">
+            <router-link :to="`/teacher/score-input/${project.project?.projectId}`" class="score-btn">
+              录入成绩
+            </router-link>
+            <!-- 如果已有成绩，显示查看成绩按钮 -->
+            <router-link v-if="project.achievement" :to="`/teacher/score-detail/${project.projectId}`" class="view-score-btn">
+              查看成绩
+            </router-link>
+          </div>
+        </div>
         
         <div class="project-actions">
           <button type="button" class="back-btn" @click="router.back()">返回列表</button>
@@ -239,6 +252,33 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
+.score-section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.score-actions {
+  margin-top: 1rem;
+}
+
+.score-btn, .view-score-btn {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  margin-right: 1rem;
+}
+
+.score-btn:hover, .view-score-btn:hover {
+  background-color: #2980b9;
+}
+
 .complete-section {
   margin-bottom: 2rem;
   padding: 1rem;

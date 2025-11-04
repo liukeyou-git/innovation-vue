@@ -95,6 +95,18 @@ const routes = [
     roles: [1] // 仅教师可访问
   }
   },
+  {
+      path: '/teacher/score-input/:id',
+      name: 'TeacherScoreInput',
+      component: () => import('../views/TeacherScoreInputView.vue'),
+      meta: { requiresAuth: true, roles: [1] }
+  },
+  {
+      path: '/teacher/score-management',
+      name: 'TeacherScoreManagement',
+      component: () => import('../views/TeacherScoreManagementView.vue'),
+      meta: { requiresAuth: true, roles: [1] }
+  },
   // 重定向：未匹配路径跳转到登录页
   {
     path: '/:pathMatch(.*)*',

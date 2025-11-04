@@ -49,3 +49,23 @@ export const completeProject = (projectId, data) => {
 export const getTeacherCompletedProjects = () => {
   return request.get('/teacher/projects/completed')
 }
+
+// 添加成绩相关接口
+// 获取项目成绩
+export const getProjectAchievement = (projectId) => {
+  return request.get(`/achievements/project/${projectId}`)
+}
+
+// 录入/更新项目成绩
+export const saveProjectAchievement = (data) => {
+  return request.post('/teacher/achievements', data,{
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+}
+
+// 获取教师评定的所有成绩
+export const getTeacherAchievements = () => {
+  return request.get('/teacher/achievements')
+}

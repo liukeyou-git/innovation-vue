@@ -10,7 +10,11 @@
     <main>
       <h2>学生功能模块</h2>
       <ul>
-        <li>我的成绩查询</li>
+        <li>
+          <router-link to="/student/score-query" class="project-link">
+            我的成绩查询
+          </router-link>
+        </li>
         <li><router-link to="/student/project-apply" class="project-link">
             创新创业项目申报
           </router-link>

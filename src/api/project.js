@@ -69,3 +69,9 @@ export const saveProjectAchievement = (data) => {
 export const getTeacherAchievements = () => {
   return request.get('/teacher/achievements')
 }
+
+// src/api/project.js 中添加以下内容
+// 获取学生的所有成绩
+export const getStudentAchievements = () => {
+  return request.get('/student/achievements')
+}

@@ -1,9 +1,10 @@
+<!-- src/views/StudentScoreView.vue -->
 <template>
-  <div class="score-management-container">
+  <div class="score-query-container">
     <header>
-      <h1>成绩管理</h1>
+      <h1>我的成绩查询</h1>
       <div class="user-info">
-        <span>欢迎您，{{ userStore.userInfo?.realName }}（教师）</span>
+        <span>欢迎您，{{ userStore.userInfo?.realName }}（学生）</span>
         <button @click="handleLogout">退出登录</button>
       </div>
     </header>
@@ -12,41 +13,36 @@
       
       <div v-if="errorMsg" class="error-msg">{{ errorMsg }}</div>
       
-      <div v-if="!loading && achievements.length === 0 && !errorMsg" class="empty-state">
+      <div v-if="!loading && scores.length === 0 && !errorMsg" class="empty-state">
         暂无成绩数据
       </div>
       
-      <div class="scores-table" v-if="achievements.length > 0">
-      <table>
-        <thead>
-          <tr>
-            <th>项目名称</th>
-            <th>学生姓名</th>
-            <th>分数</th>
-            <th>等级</th>
-            <th>评定时间</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in achievements" :key="item.achievement.achievementId">
-            <td>{{ item.project?.projectName }}</td>
-            <!-- 从members数组中提取学生姓名，用逗号拼接 -->
-            <td>
-              {{ item.members?.map(member => member.realName).join(', ') || '无学生' }}
-            </td>
-            <td>{{ item.achievement?.score }}</td>
-            <td>{{ item.achievement?.grade }}</td>
-            <td>{{ formatDate(item.achievement?.evaluationTime) }}</td>
-            <td>
-              <router-link :to="`/teacher/score-input/${item.project?.projectId}`" class="edit-btn">
-                编辑
-              </router-link>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <div class="scores-table" v-if="scores.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>项目名称</th>
+              <th>分数</th>
+              <th>等级</th>
+              <th>评语</th>
+              <th>评定时间</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in scores" :key="item.achievement.achievementId">
+              <td>{{ item.projectName }}</td>
+              <td>{{ item.achievement?.score }}</td>
+              <td>{{ item.achievement?.grade }}</td>
+              <td>{{ item.achievement?.teacherComment || '无' }}</td>
+              <td>{{ formatDate(item.achievement?.evaluationTime) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="project-actions">
+        <button type="button" class="back-btn" @click="router.back()">返回</button>
+      </div>
     </main>
   </div>
 </template>
@@ -56,13 +52,13 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store'
 import { userLogout } from '../api/user'
-import { getTeacherAchievements } from '../api/project'
+import { getStudentAchievements } from '../api/project' // 我们将在下一步添加这个API
 
 const userStore = useUserStore()
 const router = useRouter()
 
 // 数据
-const achievements = ref([])
+const scores = ref([])
 const loading = ref(false)
 const errorMsg = ref('')
 
@@ -73,13 +69,13 @@ const formatDate = (dateString) => {
   return date.toLocaleString()
 }
 
-// 页面加载时获取数据
+// 页面加载时获取成绩数据
 onMounted(async () => {
   try {
     loading.value = true
-    const res = await getTeacherAchievements()
+    const res = await getStudentAchievements()
     if (res.code === 0) {
-      achievements.value = res.data
+      scores.value = res.data
     } else {
       errorMsg.value = res.message || '获取成绩列表失败'
     }
@@ -105,8 +101,7 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
-/* 基础样式与其他页面保持一致 */
-.role-container {
+.score-query-container {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -117,7 +112,7 @@ header {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background-color: #3498db;
+  background-color: #2ecc71;
   color: white;
 }
 
@@ -130,7 +125,7 @@ header {
 .user-info button {
   padding: 0.5rem 1rem;
   background-color: white;
-  color: #3498db;
+  color: #2ecc71;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -139,19 +134,22 @@ header {
 main {
   flex: 1;
   padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .scores-table {
   margin-top: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  overflow: hidden;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  background-color: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
 th, td {
@@ -166,21 +164,40 @@ th {
   font-weight: 600;
 }
 
-.edit-btn {
-  color: #3498db;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
+.back-btn {
+  margin-top: 1rem;
+  padding: 0.6rem 1.2rem;
+  background-color: #999;
+  color: white;
+  border: none;
   border-radius: 4px;
-  background-color: #f0f7ff;
+  cursor: pointer;
 }
 
-.edit-btn:hover {
-  background-color: #e0efff;
+.back-btn:hover {
+  background-color: #777;
 }
 
 .empty-state {
   text-align: center;
   padding: 2rem;
   color: #666;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.error-msg {
+  color: #e74c3c;
+  text-align: center;
+  padding: 1rem;
+  background-color: #fef0f0;
+  border-radius: 4px;
 }
 </style>

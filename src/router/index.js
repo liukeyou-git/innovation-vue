@@ -4,6 +4,7 @@ import RegisterView from '../views/RegisterView.vue'
 import AdminView from '../views/AdminView.vue'
 import TeacherView from '../views/TeacherView.vue'
 import StudentView from '../views/StudentView.vue'
+import StudentScoreView from '../views/StudentScoreView.vue'
 
 const routes = [
   {
@@ -106,6 +107,12 @@ const routes = [
       name: 'TeacherScoreManagement',
       component: () => import('../views/TeacherScoreManagementView.vue'),
       meta: { requiresAuth: true, roles: [1] }
+  },
+  {
+    path: '/student/score-query',
+    name: 'StudentScore',
+    component: StudentScoreView,
+    meta: { requiresAuth: true, roles: [2] }
   },
   // 重定向：未匹配路径跳转到登录页
   {

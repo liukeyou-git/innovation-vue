@@ -1,68 +1,143 @@
 <template>
   <div class="score-management-container">
     <header>
-      <h1>成绩管理</h1>
+      <div class="header-left">
+        <!-- 添加返回按钮 -->
+        <button class="back-btn" @click="handleBack">
+          <span>← 返回</span>
+        </button>
+        <h1>成绩管理</h1>
+      </div>
       <div class="user-info">
         <span>欢迎您，{{ userStore.userInfo?.realName }}（教师）</span>
         <button @click="handleLogout">退出登录</button>
       </div>
     </header>
     <main>
+      <!-- Tab切换区域 -->
+      <div class="tab-container">
+        <div 
+          class="tab-item" 
+          :class="{ active: activeTab === 'projectScores' }"
+          @click="activeTab = 'projectScores'"
+        >
+          项目成绩
+        </div>
+        <div 
+          class="tab-item" 
+          :class="{ active: activeTab === 'scoreEntry' }"
+          @click="activeTab = 'scoreEntry'"
+        >
+          成绩录入
+        </div>
+        
+        <!-- 搜索框 -->
+        <div class="search-container">
+          <input
+            type="text"
+            v-model="searchKeyword"
+            placeholder="请输入项目名称搜索"
+            @input="handleSearch"
+          >
+        </div>
+      </div>
+      
       <div v-if="loading" class="loading">加载中...</div>
       
       <div v-if="errorMsg" class="error-msg">{{ errorMsg }}</div>
       
-      <div v-if="!loading && achievements.length === 0 && !errorMsg" class="empty-state">
-        暂无成绩数据
+      <!-- 项目成绩Tab内容 -->
+      <div v-if="activeTab === 'projectScores' && !loading && !errorMsg">
+        <div v-if="filteredScores.length === 0" class="empty-state">
+          暂无成绩数据
+        </div>
+        
+        <div class="scores-table" v-if="filteredScores.length > 0">
+          <table>
+            <thead>
+              <tr>
+                <th>项目名称</th>
+                <th>学生姓名</th>
+                <th>分数</th>
+                <th>等级</th>
+                <th>评定时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in filteredScores" :key="item.achievement.achievementId">
+                <td>{{ item.project?.projectName }}</td>
+                <td>
+                  {{ item.members?.map(member => member.realName).join(', ') || '无学生' }}
+                </td>
+                <td>{{ item.achievement?.score }}</td>
+                <td>{{ item.achievement?.grade }}</td>
+                <td>{{ formatDate(item.achievement?.evaluationTime) }}</td>
+                <td>
+                  <router-link :to="`/teacher/score-input/${item.project?.projectId}`" class="edit-btn">
+                    编辑
+                  </router-link>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
       
-      <div class="scores-table" v-if="achievements.length > 0">
-      <table>
-        <thead>
-          <tr>
-            <th>项目名称</th>
-            <th>学生姓名</th>
-            <th>分数</th>
-            <th>等级</th>
-            <th>评定时间</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in achievements" :key="item.achievement.achievementId">
-            <td>{{ item.project?.projectName }}</td>
-            <!-- 从members数组中提取学生姓名，用逗号拼接 -->
-            <td>
-              {{ item.members?.map(member => member.realName).join(', ') || '无学生' }}
-            </td>
-            <td>{{ item.achievement?.score }}</td>
-            <td>{{ item.achievement?.grade }}</td>
-            <td>{{ formatDate(item.achievement?.evaluationTime) }}</td>
-            <td>
-              <router-link :to="`/teacher/score-input/${item.project?.projectId}`" class="edit-btn">
-                编辑
-              </router-link>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <!-- 成绩录入Tab内容 -->
+      <div v-if="activeTab === 'scoreEntry' && !loading && !errorMsg">
+        <div v-if="filteredProjects.length === 0" class="empty-state">
+          暂无已结题项目
+        </div>
+        
+        <div class="scores-table" v-if="filteredProjects.length > 0">
+          <table>
+            <thead>
+              <tr>
+                <th>项目名称</th>
+                <th>申报学生</th>
+                <th>结题时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="project in filteredProjects" :key="project.projectId">
+                <td>{{ project.projectName }}</td>
+                <td>
+                  {{ project.studentName || '无学生' }}
+                </td>
+                <td>{{ formatDate(project.completeTime) }}</td>
+                <td>
+                  <router-link :to="`/teacher/score-input/${project.id}`" class="edit-btn">
+                    录入成绩
+                  </router-link>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store'
 import { userLogout } from '../api/user'
-import { getTeacherAchievements } from '../api/project'
+import { getTeacherAchievements, getUnscoredCompletedProjects } from '../api/project'
 
 const userStore = useUserStore()
 const router = useRouter()
 
 // 数据
-const achievements = ref([])
+const activeTab = ref('projectScores') // 当前激活的Tab，默认项目成绩
+const achievements = ref([]) // 所有项目成绩数据
+const completedProjects = ref([]) // 所有已结题项目
+const filteredScores = ref([]) // 过滤后的成绩数据
+const filteredProjects = ref([]) // 过滤后的项目数据
+const searchKeyword = ref('') // 搜索关键词
 const loading = ref(false)
 const errorMsg = ref('')
 
@@ -73,22 +148,69 @@ const formatDate = (dateString) => {
   return date.toLocaleString()
 }
 
+// 返回上一页功能
+const handleBack = () => {
+  // 方案1：简单返回上一页
+  // router.back()
+  
+  // 方案2：带安全检查的返回（推荐）
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    // 如果没有历史记录，跳转到教师主页或登录页
+    router.push('/teacher')
+  }
+}
+
+// 处理搜索
+const handleSearch = () => {
+  const keyword = searchKeyword.value.trim().toLowerCase()
+  
+  // 过滤项目成绩
+  filteredScores.value = achievements.value.filter(item => 
+    item.project?.projectName?.toLowerCase().includes(keyword)
+  )
+  
+  // 过滤已结题项目
+  filteredProjects.value = completedProjects.value.filter(project => 
+    project.projectName?.toLowerCase().includes(keyword)
+  )
+}
+
 // 页面加载时获取数据
 onMounted(async () => {
   try {
     loading.value = true
-    const res = await getTeacherAchievements()
-    if (res.code === 0) {
-      achievements.value = res.data
+    // 并行获取两个接口数据
+    const [achievementsRes, projectsRes] = await Promise.all([
+      getTeacherAchievements(),
+      getUnscoredCompletedProjects()
+    ])
+    
+    if (achievementsRes.code === 0) {
+      achievements.value = achievementsRes.data
+      filteredScores.value = [...achievements.value]
     } else {
-      errorMsg.value = res.message || '获取成绩列表失败'
+      errorMsg.value = achievementsRes.message || '获取成绩列表失败'
+    }
+    
+    if (projectsRes.code === 0) {
+      completedProjects.value = projectsRes.data
+      filteredProjects.value = [...completedProjects.value]
+    } else {
+      errorMsg.value = projectsRes.message || '获取已结题项目失败'
     }
   } catch (err) {
-    console.error('获取成绩列表失败', err)
-    errorMsg.value = '获取成绩列表失败，请稍后重试'
+    console.error('数据获取失败', err)
+    errorMsg.value = '数据获取失败，请稍后重试'
   } finally {
     loading.value = false
   }
+})
+
+// 监听Tab切换，触发搜索过滤
+watch(activeTab, () => {
+  handleSearch()
 })
 
 // 退出登录
@@ -105,13 +227,13 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
-/* 基础样式与其他页面保持一致 */
-.role-container {
+.score-management-container {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
+/* 修改header布局 */
 header {
   display: flex;
   justify-content: space-between;
@@ -119,6 +241,29 @@ header {
   padding: 1rem 2rem;
   background-color: #3498db;
   color: white;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* 返回按钮样式 */
+.back-btn {
+  padding: 0.5rem 1rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 0.9rem;
+}
+
+.back-btn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: translateX(-2px);
 }
 
 .user-info {
@@ -139,6 +284,51 @@ header {
 main {
   flex: 1;
   padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Tab样式 */
+.tab-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.tab-item {
+  padding: 0.8rem 1.5rem;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.tab-item.active {
+  background-color: #3498db;
+  color: white;
+}
+
+.tab-item:hover:not(.active) {
+  background-color: #e0e0e0;
+}
+
+/* 搜索框样式 */
+.search-container {
+  margin-left: auto;
+  flex: 0 0 300px;
+}
+
+.search-container input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
 }
 
 .scores-table {
@@ -182,5 +372,22 @@ th {
   text-align: center;
   padding: 2rem;
   color: #666;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.error-msg {
+  color: #e74c3c;
+  text-align: center;
+  padding: 1rem;
+  background-color: #fef0f0;
+  border-radius: 4px;
 }
 </style>

@@ -29,12 +29,14 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in scores" :key="item.achievement.achievementId">
+            <!-- 1. 修改循环key为项目ID（避免依赖可能为null的achievementId） -->
+            <tr v-for="item in scores" :key="item.projectId">
               <td>{{ item.projectName }}</td>
-              <td>{{ item.achievement?.score }}</td>
-              <td>{{ item.achievement?.grade }}</td>
+              <!-- 2. 所有achievement属性访问添加可选链判断 -->
+              <td>{{ item.achievement?.score || '无' }}</td>
+              <td>{{ item.achievement?.grade || '无' }}</td>
               <td>{{ item.achievement?.teacherComment || '无' }}</td>
-              <td>{{ formatDate(item.achievement?.evaluationTime) }}</td>
+              <td>{{ formatDate(item.achievement?.evaluationTime) || '未知时间' }}</td>
             </tr>
           </tbody>
         </table>

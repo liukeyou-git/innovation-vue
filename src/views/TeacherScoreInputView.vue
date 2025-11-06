@@ -161,7 +161,16 @@ const handleSubmit = async () => {
 
 // 取消操作
 const handleCancel = () => {
-  router.push('/teacher/score-management')
+  // 方案1：简单返回上一页
+  // router.back()
+  
+  // 方案2：带安全检查的返回（推荐）
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    // 如果是直接打开页面或没有历史记录，跳转到默认页面
+    router.push('/teacher/score-management')
+  }
 }
 
 // 退出登录

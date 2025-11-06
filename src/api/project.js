@@ -50,6 +50,11 @@ export const getTeacherCompletedProjects = () => {
   return request.get('/teacher/projects/completed')
 }
 
+// 获取未录入成绩的已结题项目列表（供教师录入成绩）
+export const getUnscoredCompletedProjects = () => {
+  return request.get('/teacher/projects/completed/unscored')
+}
+
 // 添加成绩相关接口
 // 获取项目成绩
 export const getProjectAchievement = (projectId) => {

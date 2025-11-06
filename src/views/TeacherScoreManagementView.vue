@@ -31,6 +31,15 @@
           成绩录入
         </div>
         
+        <!-- 只在项目成绩标签显示导出按钮 -->
+        <button 
+          v-if="activeTab === 'projectScores' && filteredScores.length > 0"
+          class="export-btn"
+          @click="exportScores"
+        >
+          导出成绩
+        </button>
+
         <!-- 搜索框 -->
         <div class="search-container">
           <input
@@ -127,6 +136,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '../store'
 import { userLogout } from '../api/user'
 import { getTeacherAchievements, getUnscoredCompletedProjects } from '../api/project'
+import request from '../utils/request' // 导入封装的axios实例
 
 const userStore = useUserStore()
 const router = useRouter()
@@ -141,12 +151,143 @@ const searchKeyword = ref('') // 搜索关键词
 const loading = ref(false)
 const errorMsg = ref('')
 
+
 // 格式化日期
 const formatDate = (dateString) => {
   if (!dateString) return '未知时间'
   const date = new Date(dateString)
   return date.toLocaleString()
 }
+
+// 导出成绩为CSV文件
+// const exportScores = () => {
+//   // 准备CSV表头
+//   const headers = [
+//     '项目名称',
+//     '学生姓名',
+//     '分数',
+//     '等级',
+//     '评定时间'
+//   ]
+  
+//   // 准备CSV数据行（确保所有字段先转为字符串）
+//   const rows = filteredScores.value.map(item => [
+//     // 每个字段先转为字符串，避免非字符串类型导致的错误
+//     String(item.project?.projectName || ''),
+//     String(item.members?.map(member => member.realName).join(', ') || '无学生'),
+//     String(item.achievement?.score || ''),
+//     String(item.achievement?.grade || ''),
+//     String(formatDate(item.achievement?.evaluationTime) || '')
+//   ])
+  
+//   // 组合CSV内容（带BOM头解决中文乱码问题）
+//   const csvContent = '\ufeff' + [
+//     headers.join(','),
+//     ...rows.map(row => row.map(field => {
+//       // 先确保field是字符串（再次转换，双重保险）
+//       const strField = String(field);
+//       // 处理包含逗号或引号的字段
+//       if (strField.includes(',') || strField.includes('"')) {
+//         return `"${strField.replace(/"/g, '""')}"`;
+//       }
+//       return strField;
+//     }).join(','))
+//   ].join('\n')
+  
+//   // 创建Blob对象
+//   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  
+//   // 创建下载链接
+//   const link = document.createElement('a')
+//   const url = URL.createObjectURL(blob)
+//   link.setAttribute('href', url)
+  
+//   // 生成包含当前日期的文件名
+//   const date = new Date()
+//   const fileName = `成绩列表_${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}.csv`
+//   link.setAttribute('download', fileName)
+  
+//   // 触发下载
+//   link.style.visibility = 'hidden'
+//   document.body.appendChild(link)
+//   link.click()
+//   document.body.removeChild(link)
+// }
+// 调用后端导出接口的前端代码（无需前端拼接文件）
+const exportScores = async () => {
+  try {
+    loading.value = true;
+    const response = await request({
+      url: '/teacher/achievements/export',
+      method: 'get',
+      responseType: 'blob',
+      timeout: 10000
+    });
+
+    if (!response) {
+      throw new Error('导出请求失败，未收到响应');
+    }
+
+    // 关键：先检查response.data是否存在
+    if (!response.data) {
+      throw new Error('后端未返回任何文件数据');
+    }
+
+    // 检查是否为Blob类型
+    if (!(response.data instanceof Blob)) {
+      // 尝试解析为文本错误信息
+      const errorText = await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsText(response.data);
+      });
+      throw new Error(`导出数据格式错误：${errorText || '未知错误'}`);
+    }
+
+    // 检查文件大小（至少应有表头，约1KB以上）
+    if (response.data.size < 1024) {
+      const content = await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsText(response.data);
+      });
+      throw new Error(`导出文件可能损坏（大小：${response.data.size}B）：${content}`);
+    }
+
+    // 解析文件名并下载（原有逻辑）
+    let fileName = '成绩列表.xlsx';
+    const contentDisposition = response.headers?.['content-disposition'];
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename\*?=UTF-8''(.+)/);
+      if (match && match[1]) {
+        fileName = decodeURIComponent(match[1]);
+      }
+    }
+
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+
+    if (window.navigator.msSaveOrOpenBlob) {
+      window.navigator.msSaveOrOpenBlob(blob, fileName);
+    } else {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+  } catch (err) {
+    console.error('导出失败:', err);
+    errorMsg.value = err.message || '导出失败，请重试';
+  } finally {
+    loading.value = false;
+  }
+};
 
 // 返回上一页功能
 const handleBack = () => {
@@ -389,5 +530,21 @@ th {
   padding: 1rem;
   background-color: #fef0f0;
   border-radius: 4px;
+}
+
+/* 在style部分添加 */
+.export-btn {
+  padding: 0.8rem 1.5rem;
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.export-btn:hover {
+  background-color: #27ae60;
 }
 </style>

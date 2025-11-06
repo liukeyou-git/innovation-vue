@@ -22,12 +22,19 @@ request.interceptors.request.use(
 )
 
 // 响应拦截器
+// 检查响应拦截器，确保不处理blob类型
 request.interceptors.response.use(
-  (response) => response.data,
-  (error) => {
-    console.error('请求错误:', error)
-    return Promise.reject(error)
-  }
-)
+    response => {
+        // 关键：如果是blob类型，直接返回，不解析为JSON
+        if (response.config.responseType === 'blob') {
+            return response;
+        }
+        // 其他类型按正常逻辑处理（如JSON）
+        return response.data;
+    },
+    error => {
+        return Promise.reject(error);
+    }
+);
 
 export default request

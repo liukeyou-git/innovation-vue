@@ -19,3 +19,8 @@ export const deleteUser = (userId) => {
 export const updateUser = (userId, data) => {
   return request.put(`/admin/users/${userId}`, data)
 }
+
+// 更新用户状态（禁用/启用）
+export const updateUserStatus = (userId, status) => {
+  return request.put(`/admin/users/${userId}/status`, { status })
+}

@@ -15,7 +15,6 @@
             用户管理
           </router-link>
         </li>
-        <li>系统设置</li>
       </ul>
     </main>
   </div>

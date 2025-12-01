@@ -35,6 +35,7 @@
               <th>班级/部门</th>
               <th>邮箱</th>
               <th>电话</th>
+              <th>状态</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -48,6 +49,19 @@
               <td>{{ user.className || user.department || '-' }}</td>
               <td>{{ user.email || '-' }}</td>
               <td>{{ user.phone || '-' }}</td>
+              <td>
+                <span :class="user.status === 1 ? 'status-active' : 'status-disabled'">
+                  {{ user.status === 1 ? '启用' : '禁用' }}
+                </span>
+              </td>
+              <td>
+              <button 
+                @click="handleStatusChange(user.userId, user.status)"
+                :class="user.status === 1 ? 'btn-disable' : 'btn-enable'"
+              >
+                {{ user.status === 1 ? '禁用' : '启用' }}
+              </button>
+              </td>
               <td class="actions">
                 <button @click="editUser(user)" class="edit-btn">编辑</button>
                 <button @click="handleDeleteUser(user.userId)" class="delete-btn">删除</button>
@@ -55,6 +69,79 @@
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div v-if="isEditDialogVisible" class="edit-dialog-mask">
+        <div class="edit-dialog">
+          <div class="dialog-header">
+            <h3>编辑用户</h3>
+            <button @click="closeEditDialog" class="close-btn">×</button>
+          </div>
+          
+          <div class="dialog-body">
+            <form @submit.prevent="handleUpdateUser">
+              <div class="form-group">
+                <label>用户名</label>
+                <input type="text" v-model="editForm.username" disabled>
+                <span class="hint">用户名不可修改</span>
+              </div>
+              
+              <div class="form-group">
+                <label>真实姓名 <span class="required">*</span></label>
+                <input type="text" v-model="editForm.realName" required>
+              </div>
+              
+              <div class="form-group">
+                <label>角色 <span class="required">*</span></label>
+                <select v-model="editForm.role" required>
+                  <option value="0">管理员</option>
+                  <option value="1">教师</option>
+                  <option value="2">学生</option>
+                </select>
+              </div>
+              
+              <div class="form-group" v-if="editForm.role === '2'">
+                <label>学号 <span class="required">*</span></label>
+                <input type="text" v-model="editForm.studentId" required>
+              </div>
+              
+              <div class="form-group" v-if="editForm.role === '1'">
+                <label>工号 <span class="required">*</span></label>
+                <input type="text" v-model="editForm.teacherId" required>
+              </div>
+              
+              <div class="form-group" v-if="editForm.role === '2'">
+                <label>班级 <span class="required">*</span></label>
+                <input type="text" v-model="editForm.className" required>
+              </div>
+              
+              <div class="form-group" v-if="editForm.role === '1'">
+                <label>部门 <span class="required">*</span></label>
+                <input type="text" v-model="editForm.department" required>
+              </div>
+              
+              <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" v-model="editForm.email">
+              </div>
+              
+              <div class="form-group">
+                <label>电话</label>
+                <input type="text" v-model="editForm.phone">
+              </div>
+              
+              <div class="form-group">
+                <label>密码（不填则不修改）</label>
+                <input type="password" v-model="editForm.password" placeholder="请输入新密码">
+              </div>
+              
+              <div class="form-actions">
+                <button type="button" @click="closeEditDialog" class="cancel-btn">取消</button>
+                <button type="submit" class="confirm-btn">确认更新</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </main>
   </div>
@@ -65,17 +152,50 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../../store'
 import { userLogout } from '../../api/user'
-import { getUsersList, deleteUser } from '../../api/admin'
+import { getUsersList, deleteUser, updateUser, updateUserStatus } from '../../api/admin'
 
 const userStore = useUserStore()
 const router = useRouter()
 const users = ref([])
 const searchKeyword = ref('')
 
+// 编辑相关变量
+const isEditDialogVisible = ref(false)
+const currentUserId = ref('')
+const editForm = ref({
+  username: '',
+  realName: '',
+  role: '2',
+  studentId: '',
+  teacherId: '',
+  className: '',
+  department: '',
+  email: '',
+  phone: '',
+  password: ''
+})
+
 // 页面加载时获取用户列表
 onMounted(() => {
   getUsersList()
 })
+
+// 处理状态变更
+const handleStatusChange = async (userId, currentStatus) => {
+  const newStatus = currentStatus === 1 ? 0 : 1
+  try {
+    const res = await updateUserStatus(userId, newStatus)
+    if (res.code === 0) {
+      // 刷新列表
+      fetchUsersList()
+    } else {
+      alert(res.message || '操作失败')
+    }
+  } catch (err) {
+    console.error('状态更新失败', err)
+    alert('操作失败，请重试')
+  }
+}
 
 // 获取用户列表
 const fetchUsersList = async () => {
@@ -90,9 +210,58 @@ const fetchUsersList = async () => {
 }
 
 // 编辑用户
+// 编辑用户 - 打开弹窗并填充数据
 const editUser = (user) => {
-  // 编辑用户逻辑，可跳转到编辑页面
-  console.log('编辑用户', user)
+  currentUserId.value = user.userId
+  // 填充表单数据
+  editForm.value = {
+    username: user.username,
+    realName: user.realName,
+    role: user.role.toString(),
+    studentId: user.studentId || '',
+    teacherId: user.teacherId || '',
+    className: user.className || '',
+    department: user.department || '',
+    email: user.email || '',
+    phone: user.phone || '',
+    password: ''  // 密码默认空，不修改
+  }
+  isEditDialogVisible.value = true
+}
+
+// 关闭编辑弹窗
+const closeEditDialog = () => {
+  isEditDialogVisible.value = false
+  editForm.value.password = ''  // 清空密码
+}
+
+// 提交更新用户信息
+const handleUpdateUser = async () => {
+  try {
+    // 构建提交数据（排除空密码）
+    const submitData = {
+      ...editForm.value,
+      role: parseInt(editForm.value.role)
+    }
+    // 如果密码为空则删除该字段，避免覆盖原有密码
+    if (!submitData.password) {
+      delete submitData.password
+    }
+    // 移除不可修改的字段
+    delete submitData.username
+
+    const res = await updateUser(currentUserId.value, submitData)
+    if (res.code === 0) {
+      alert('更新成功')
+      closeEditDialog()
+      fetchUsersList()  // 刷新列表
+    } else {
+      alert('更新失败: ' + res.message)
+    }
+  } catch (err) {
+    console.error('更新用户失败', err)
+    alert('更新失败，请稍后重试')
+  }
 }
 
 // 删除用户
@@ -127,6 +296,123 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
+.status-active {
+  color: #2ecc71;
+}
+.status-disabled {
+  color: #e74c3c;
+}
+.btn-disable {
+  background-color: #fef0f0;
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
+}
+.btn-enable {
+  background-color: #f0f9f0;
+  color: #2ecc71;
+  border: 1px solid #2ecc71;
+}
+button {
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.edit-dialog-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.edit-dialog {
+  background-color: white;
+  width: 500px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.dialog-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f1f1f1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+}
+
+.dialog-body {
+  padding: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.required {
+  color: #e74c3c;
+}
+
+.hint {
+  display: block;
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.3rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.cancel-btn {
+  padding: 0.6rem 1.2rem;
+  background-color: #999;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.confirm-btn {
+  padding: 0.6rem 1.2rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
 .user-management-container {
   min-height: 100vh;
   display: flex;

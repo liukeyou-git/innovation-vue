@@ -154,14 +154,24 @@ router.beforeEach((to, from, next) => {
     return
   }
   
-  // 2. 已登录用户验证角色权限
+  // 2. 已登录用户验证角色权限和账号状态
   if (to.meta.requiresAuth && userInfo) {
+    // 检查账号是否被禁用
+    if (userInfo.status === 0) {
+      // 清除用户信息并强制登录
+      localStorage.removeItem('userInfo')
+      localStorage.removeItem('token')
+      alert('账号已被禁用，请联系管理员')
+      next('/login')
+      return
+    }
+
+    // 检查角色权限（现有逻辑）
     const userRole = userInfo.role
-    // 检查当前角色是否在路由允许的角色列表中
     if (to.meta.roles.includes(userRole)) {
       next()
     } else {
-      // 角色不匹配：跳转到对应角色的首页（或提示无权限）
+      // 角色不匹配跳转（现有逻辑）
       switch(userRole) {
         case 0:
           next('/admin')

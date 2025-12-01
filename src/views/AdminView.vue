@@ -10,8 +10,11 @@
     <main>
       <h2>管理员功能模块</h2>
       <ul>
-        <li>用户管理</li>
-        <li>成绩审核</li>
+        <li>
+          <router-link to="/admin/user-management" class="project-link">
+            用户管理
+          </router-link>
+        </li>
         <li>系统设置</li>
       </ul>
     </main>
@@ -41,6 +44,18 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
+.project-link {
+  color: #e74c3c;
+  text-decoration: none;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.project-link:hover {
+  text-decoration: underline;
+}
+
 .role-container {
   min-height: 100vh;
   display: flex;

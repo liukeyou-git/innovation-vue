@@ -114,6 +114,24 @@ const routes = [
     component: StudentScoreView,
     meta: { requiresAuth: true, roles: [2] }
   },
+  {
+  path: '/admin/user-management',
+  name: 'AdminUserManagement',
+  component: () => import('../views/admin/UserManagementView.vue'),
+  meta: { 
+    requiresAuth: true,
+    roles: [0] // 仅管理员可访问
+  }
+  },
+  {
+  path: '/admin/user-import',
+  name: 'AdminUserImport',
+  component: () => import('../views/admin/UserImportView.vue'),
+  meta: { 
+    requiresAuth: true,
+    roles: [0] // 仅管理员可访问
+  }
+  },
   // 重定向：未匹配路径跳转到登录页
   {
     path: '/:pathMatch(.*)*',

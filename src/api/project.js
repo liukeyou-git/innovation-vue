@@ -75,8 +75,17 @@ export const getTeacherAchievements = () => {
   return request.get('/teacher/achievements')
 }
 
-// src/api/project.js 中添加以下内容
+
 // 获取学生的所有成绩
 export const getStudentAchievements = () => {
   return request.get('/student/achievements')
+}
+
+// 批量录入/更新项目成绩
+export const saveBatchProjectAchievements = (data) => {
+  return request.post('/teacher/achievements/batch/import', data, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
 }
